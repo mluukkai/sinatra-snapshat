@@ -12,11 +12,15 @@ configure :development do
   DB = Sequel.connect(path)
 end
 
-configure :development do
-  Sequel.connect(ENV['DATABASE_URL'])
+configure :production do
+  DB = Sequel.connect(ENV['DATABASE_URL'])
 end
 
 class Beer < Sequel::Model
+end
+
+get '/' do
+  erb :home
 end
 
 get '/create_form' do
@@ -59,6 +63,9 @@ __END__
   <br><br>
   <input type="submit" value="Submit">
 </form>
+
+@@home
+<h1>beerapp!</h1>
 
 @@all_beers
 <h1>oluet</h1>

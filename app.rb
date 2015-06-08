@@ -2,12 +2,12 @@
 
 require 'rubygems'
 require 'sequel'
-require 'sqlite3'
-require 'byebug'
 require 'sinatra'
 require 'sinatra/reloader'
 
 configure :development do
+  require 'sqlite3'
+  require 'byebug'
   path = 'sqlite:///Users/mluukkai/kurssirepot/tikape/ruby/sequel/database.sqlite3'
   DB = Sequel.connect(path)
 end

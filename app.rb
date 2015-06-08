@@ -12,6 +12,10 @@ configure :development do
   DB = Sequel.connect(path)
 end
 
+configure :development do
+  Sequel.connect(ENV['DATABASE_URL'])
+end
+
 class Beer < Sequel::Model
 end
 

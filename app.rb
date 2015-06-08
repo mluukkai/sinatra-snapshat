@@ -1,20 +1,6 @@
-# bundle exec irb -r ./src.rb
-
 require 'rubygems'
-require 'sequel'
 require 'sinatra'
-require 'sinatra/reloader'
-
-configure :development do
-  require 'sqlite3'
-  require 'byebug'
-  path = 'sqlite:///Users/mluukkai/kurssirepot/tikape/ruby/sequel/database.sqlite3'
-  DB = Sequel.connect(path)
-end
-
-configure :production do
-  DB = Sequel.connect(ENV['DATABASE_URL'])
-end
+require './config'
 
 class Beer < Sequel::Model
 end
@@ -68,6 +54,7 @@ __END__
 <h1>beerapp!</h1>
 
 @@all_beers
+
 <h1>oluet</h1>
 
 <ul>

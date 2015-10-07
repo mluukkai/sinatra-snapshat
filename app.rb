@@ -2,65 +2,115 @@ require 'rubygems'
 require 'sinatra'
 require './config'
 
-class Beer < Sequel::Model
-end
+enable :sessions
 
 get '/' do
+  query = <<eos
+  SELECT * FROM (
+    SELECT Tsat.id, text, username, count(user_id) likes
+    FROM Tsat LEFT JOIN Like ON Like.tsat_id=Tsat.id
+    GROUP BY Tsat.id
+  ) ORDER BY id DESC LIMIT 10
+eos
+
+  @tsats = DB.fetch(query)
   erb :home
 end
 
-get '/create_form' do
-  erb :beer_form
+post '/login' do
+  username = params[:username]
+  password = params[:password]
+
+  user = DB.fetch("SELECT * FROM User WHERE "+
+                  "username = '#{username}' AND password = '#{password}'").first
+
+  if user
+    session[:user] = user
+    redirect '/'
+  else
+    redirect '/login'
+  end
 end
 
-post '/create' do
-  name = params[:name]
-  brewery = params[:brewery]
-  #Beer.create(name: name, brewery: brewery)
-  DB.run("insert into beers values ('#{name}', '#{brewery}')")
-  redirect '/beers'
+get '/logout' do
+  session[:user] = nil
+  redirect '/'
 end
 
-get '/beers' do
-  #@beers = Beer.all
-  @beers = DB.fetch("select * from beers")
-  erb :all_beers
+get '/login' do
+  erb :login
+end
+
+post '/tsats/:id/like' do
+  tsat_id = params[:id].to_i
+  DB.run("INSERT INTO Like(tsat_id, user_id) " +
+         "VALUES ('#{tsat_id}', '#{session[:user][:id]}')")
+
+  redirect '/'
+end
+
+post '/tsats' do
+  message = params[:message]
+  DB.run("INSERT INTO Tsat(text, username)"+
+         "VALUES ('#{message}', '#{session[:user][:username]}')")
+
+  redirect '/'
 end
 
 __END__
 
 @@layout
 <html>
-  <a href="/beers">beers</a>
-  <a href="/create_form">create</a>
+  <% if session[:user] %>
+    <a href="/logout">logout</a>
+    <em>you are logged in as <%= session[:user][:user] %></em>
+  <% else %>
+    <a href="/login">login</a>
+  <% end %>
+
   <%=yield%>
 </html>
 
-@@beer_form
+@@login
 
-<h1>luo olut</h1>
+<h1>login</h1>
 
-<form action="/create" method="post">
-  name:<br>
-  <input type="text" name="name">
+<form action="/login" method="post">
+  username:<br>
+  <input type="text" name="username">
   <br>
-  brewery:<br>
-  <input type="text" name="brewery">
-  <br><br>
+  password:<br>
+  <input type="text" name="password">
+  <br>
   <input type="submit" value="Submit">
 </form>
 
 @@home
-<h1>beerapp!</h1>
+<h1>Snapshat</h1>
 
-@@all_beers
+<% if session[:user] %>
 
-<h1>oluet</h1>
+  <h2>new tsat</h2>
+
+  <div>
+    <form action="/tsats" method="post">
+      <input type="text" name="message">
+      <input type="submit" value="Submit">
+    </form>
+  </div>
+
+<% end %>
+
+<h2>recent activity</h2>
 
 <ul>
-  <% for beer in @beers do %>
+  <% for tsat in @tsats do %>
     <li>
-      <%= beer[:name] %> brewed by <%= beer[:brewery] %>
+      <em> <%= tsat[:text] %> </em> by <%= tsat[:username] %> has
+      <%= tsat[:likes] %> likes
+      <form action="tsats/<%=tsat[:id]%>/like" method="post">
+        <input type="submit" value="like">
+      </form>
     </li>
   <% end %>
 </ul>

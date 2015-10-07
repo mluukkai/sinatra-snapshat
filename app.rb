@@ -18,8 +18,8 @@ eos
 end
 
 post '/login' do
-  username = params[:username]
-  password = params[:password]
+  username = DB.literal(params[:username])
+  password = DB.literal(params[:password])
 
   user = DB.fetch("SELECT * FROM User WHERE "+
                   "username = '#{username}' AND password = '#{password}'").first
@@ -42,17 +42,20 @@ get '/login' do
 end
 
 post '/tsats/:id/like' do
-  tsat_id = params[:id].to_i
+  tsat_id = DB.literal(params[:id])
+  user_id = DB.literal(session[:user][:id])
   DB.run("INSERT INTO Like(tsat_id, user_id) " +
-         "VALUES ('#{tsat_id}', '#{session[:user][:id]}')")
+         "VALUES (#{tsat_id}, #{user_id})")
 
   redirect '/'
 end
 
 post '/tsats' do
-  message = params[:message]
+  message = DB.literal(params[:message])
+  username = DB.literal(session[:user][:username])
+
   DB.run("INSERT INTO Tsat(text, username)"+
-         "VALUES ('#{message}', '#{session[:user][:username]}')")
+         "VALUES (#{message}, #{username})")
 
   redirect '/'
 end
